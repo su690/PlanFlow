@@ -91,9 +91,8 @@ Deployment training with Docker/K8s
 Real‑world portfolio demonstration
 
 
-If you want, I can also generate:
-✅ Individual README files for each service
-✅ Architecture diagram (PNG/SVG)
-✅ API documentation (OpenAPI/Swagger)
-✅ Contribution guidelines
-✅ Git commit message template
+<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/c6815f79-be02-42ff-bba3-6138202cc591" />
+
+<img width="1884" height="995" alt="image" src="https://github.com/user-attachments/assets/10f2076d-bba6-4629-9ecf-ec1d7f9dc3e1" />
+
+
