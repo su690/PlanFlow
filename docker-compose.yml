@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+
+  # ─── Infrastructure ────────────────────────────────────────────────────────
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_Password}
+      - MYSQL_DATABASE=activity_planner
+      - MYSQL_USER=activity_user
+      - MYSQL_PASSWORD=${DB_Password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - activity-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redpanda — Kafka-compatible broker, no Zookeeper required.
+  # For production replace with a managed Kafka or Strimzi; see docs/k8s-kafka-notes.md.
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.1.11
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp 1
+      - --memory 512M
+      - --reserve-memory 0M
+      - --node-id 0
+      - --check=false
+      - --kafka-addr PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+    networks:
+      - activity-network
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "info", "--brokers", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 6
+
+  # ─── Application Services ─────────────────────────────────────────────────
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    depends_on:
+      - auth-service
+      - user-service
+      - activity-service
+      - planner-service
+      - notification-service
+    networks:
+      - activity-network
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=activity_planner
+      - DB_USER=activity_user
+      - DB_PASSWORD=${DB_Password}
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - KAFKA_SECURITY_PROTOCOL=PLAINTEXT
+      - KAFKA_CLIENT_ID=auth-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    networks:
+      - activity-network
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "8082:8082"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=activity_planner
+      - DB_USER=activity_user
+      - DB_PASSWORD=${DB_Password}
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - KAFKA_SECURITY_PROTOCOL=PLAINTEXT
+      - KAFKA_CLIENT_ID=user-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    networks:
+      - activity-network
+
+  activity-service:
+    build: ./activity-service
+    ports:
+      - "8083:8083"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=activity_planner
+      - DB_USER=activity_user
+      - DB_PASSWORD=${DB_Password}
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - KAFKA_SECURITY_PROTOCOL=PLAINTEXT
+      - KAFKA_CLIENT_ID=activity-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    networks:
+      - activity-network
+
+  planner-service:
+    build: ./planner-service
+    ports:
+      - "8084:8084"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=activity_planner
+      - DB_USER=activity_user
+      - DB_PASSWORD=${DB_Password}
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - KAFKA_SECURITY_PROTOCOL=PLAINTEXT
+      - KAFKA_CLIENT_ID=planner-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    networks:
+      - activity-network
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "8085:8085"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=activity_planner
+      - DB_USER=activity_user
+      - DB_PASSWORD=${DB_Password}
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - KAFKA_SECURITY_PROTOCOL=PLAINTEXT
+      - KAFKA_CLIENT_ID=notification-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    networks:
+      - activity-network
+
+volumes:
+  mysql_data:
+
+networks:
+  activity-network:
+    driver: bridge

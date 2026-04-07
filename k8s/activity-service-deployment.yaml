@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: activity-service
+  labels:
+    app: activity-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: activity-service
+  template:
+    metadata:
+      labels:
+        app: activity-service
+    spec:
+      containers:
+      - name: activity-service
+        image: activity-planner/activity-service:latest
+        ports:
+        - containerPort: 8083
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        env:
+        - name: JAVA_OPTS
+          value: "-Xms256m -Xmx512m"
+        - name: DB_HOST
+          value: "mysql"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          value: "activity_planner"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-credentials
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-credentials
+              key: password
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: KAFKA_SECURITY_PROTOCOL
+          value: "PLAINTEXT"
+        - name: KAFKA_CLIENT_ID
+          value: "activity-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: activity-service
+spec:
+  selector:
+    app: activity-service
+  ports:
+  - port: 8083
+    targetPort: 8083
+
