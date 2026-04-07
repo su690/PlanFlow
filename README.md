@@ -1,3 +1,9 @@
+<img width="1887" height="994" alt="image" src="https://github.com/user-attachments/assets/fda6edaf-0ff5-449b-a032-65d92928d6d6" />
+
+
+<img width="1884" height="995" alt="image" src="https://github.com/user-attachments/assets/10f2076d-bba6-4629-9ecf-ec1d7f9dc3e1" />
+
+
 🗂️ Activity Planner – Vert.x Microservices Architecture
 
 This repository contains a fully modular Activity Planner application built using Eclipse Vert.x and a microservices architecture.
@@ -91,8 +97,6 @@ Deployment training with Docker/K8s
 Real‑world portfolio demonstration
 
 
-<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/c6815f79-be02-42ff-bba3-6138202cc591" />
 
-<img width="1884" height="995" alt="image" src="https://github.com/user-attachments/assets/10f2076d-bba6-4629-9ecf-ec1d7f9dc3e1" />
 
 
